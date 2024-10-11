@@ -1,0 +1,33 @@
+%{
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+%}
+%language=C++
+%define class-name SystemChannelRecognizer
+%define initializer-suffix   0
+%global-table
+%null-strings
+%readonly-tables
+%enum
+%struct-type 
+struct ChannelIdentifier {
+  const char *name;
+  int channel;
+};
+%%
+1,								 1
+2,								 2
+nul,							 3
+NUL,							 3
+nul:,							 3
+NUL:,							 3
+con,							 2
+CON,							 2
+con:,							 2
+CON:,							 2
+-,								 1
++,								 2
+/dev/stdout,					 1
+/dev/stderr,					 2
+/dev/null,						 3

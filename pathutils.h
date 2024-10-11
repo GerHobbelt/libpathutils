@@ -1,4 +1,21 @@
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+// Check if given path is a stdio/null file: when it is, return the appropriate FILE* in stdio_handle (Note: NULL for /dev/null) and return 1, otherwise keep the path as is and return 0.
+int process_path_as_stdio(const char *path, FILE **stdio_handle);
+
+
+
+
+
+
+
+
+
+
+
 /* curl_sanitize_file_name flags */
 
 #define CURL_SANITIZE_ALLOW_COLONS              (1<<0)  /* Allow colons */
@@ -17,11 +34,6 @@ typedef enum {
 } CurlSanitizeCode;
 
 CurlSanitizeCode curl_sanitize_file_name(char **const sanitized, const char *file_name, int flags);
-
-#ifdef  __cplusplus
-} /* end of extern "C" */
-#endif
-
 
 
 
@@ -43,6 +55,12 @@ bool sanitize_with_extreme_prejudice; /* Sanitize URLs with extreme prejudice, i
 																				 i.e. non-hidden (UNIX dotfiles) and without
 																				 any crufty chracters that may thwart your
 																				 fileesystem. */
+
+#ifdef  __cplusplus
+} /* end of extern "C" */
+#endif
+
+
 
 
 
