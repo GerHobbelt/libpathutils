@@ -30,6 +30,7 @@
 #endif
 
 #include <string.h>
+
 enum
   {
     TOTAL_KEYWORDS = 15,
@@ -41,6 +42,8 @@ enum
 
 /* maximum key range = 24, duplicates = 0 */
 
+#if defined(__cplusplus)
+
 class SystemChannelRecognizer
 {
 private:
@@ -49,8 +52,20 @@ public:
   static const char *lookup (const char *str, size_t len);
 };
 
+#define SystemChannelRecognizer(f)   SystemChannelRecognizer:: ## f
+
+#define MK_U8(c)						(static_cast<unsigned char>(c))
+
+#else
+
+#define SystemChannelRecognizer(f)   SystemChannelRecognizer_ ## f
+
+#define MK_U8(c)						((unsigned char)(c))
+
+#endif
+
 inline unsigned int
-SystemChannelRecognizer::hash4match (const char *str, size_t len)
+SystemChannelRecognizer(hash4match)(const char* str, size_t len)
 {
   static const unsigned char asso_values[] =
     {
@@ -86,7 +101,7 @@ SystemChannelRecognizer::hash4match (const char *str, size_t len)
   switch (hval)
     {
       default:
-        hval += asso_values[static_cast<unsigned char>(str[8])];
+        hval += asso_values[MK_U8(str[8])];
 #if (defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang__ && __clang_major__ + (__clang_minor__ >= 9) > 3))) || (__STDC_VERSION__ >= 202000L && ((defined __GNUC__ && __GNUC__ >= 10) || (defined __clang__ && __clang_major__ >= 9)))
       [[fallthrough]];
 #elif (defined __GNUC__ && __GNUC__ >= 7) || (defined __clang__ && __clang_major__ >= 10)
@@ -101,7 +116,7 @@ SystemChannelRecognizer::hash4match (const char *str, size_t len)
       case 3:
       case 2:
       case 1:
-        hval += asso_values[static_cast<unsigned char>(str[0])];
+        hval += asso_values[MK_U8(str[0])];
         break;
     }
   return hval;
@@ -109,19 +124,19 @@ SystemChannelRecognizer::hash4match (const char *str, size_t len)
 
 static const char * const wordlist[] =
   {
-    (char*)0,
+    (const char*)0,
     "2",
-    (char*)0,
+    (const char*)0,
     "nul",
     "nul:",
     "-",
     "1",
-    (char*)0,
+    (const char*)0,
     "con",
     "con:",
     "+",
     "/dev/stdout",
-    (char*)0,
+    (const char*)0,
     "NUL",
     "NUL:",
     (char*)0,
@@ -134,11 +149,11 @@ static const char * const wordlist[] =
   };
 
 const char *
-SystemChannelRecognizer::lookup (const char *str, size_t len)
+SystemChannelRecognizer(lookup)(const char* str, size_t len)
 {
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
     {
-      unsigned int key = hash4match (str, len);
+      unsigned int key = SystemChannelRecognizer(hash4match)(str, len);
 
       if (key <= MAX_HASH_VALUE)
         {
