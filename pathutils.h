@@ -30,7 +30,7 @@ typedef enum {
 	CURL_SANITIZE_ERR_INVALID_PATH,     /* 1 - the path is invalid */
 	CURL_SANITIZE_ERR_BAD_ARGUMENT,     /* 2 - bad function parameter */
 	CURL_SANITIZE_ERR_OUT_OF_MEMORY,    /* 3 - out of memory */
-	CURL_SANITIZE_ERR_LAST /* never use! */
+	CURL_SANITIZE_ERR_LAST              /* never use! */
 } CurlSanitizeCode;
 
 CurlSanitizeCode curl_sanitize_file_name(char **const sanitized, const char *file_name, int flags);
@@ -47,14 +47,14 @@ bool tool_create_output_file(struct OutStruct *outs,
 
 
 bool sanitize_with_extreme_prejudice; /* Sanitize URLs with extreme prejudice, i.e.
-																				 accept some pretty shoddy input and make
-																				 the best of it.
-																				 Output filenames are also sanitized with extreme
-																				 prejudice: on all platform we will ensure
-																				 that the generated filenames are 'sane',
-																				 i.e. non-hidden (UNIX dotfiles) and without
-																				 any crufty chracters that may thwart your
-																				 fileesystem. */
+										accept some pretty shoddy input and make
+										the best of it.
+										Output filenames are also sanitized with extreme
+										prejudice: on all platform we will ensure
+										that the generated filenames are 'sane',
+										i.e. non-hidden (UNIX dotfiles) and without
+										any crufty chracters that may thwart your
+										fileesystem. */
 
 #ifdef  __cplusplus
 } /* end of extern "C" */
