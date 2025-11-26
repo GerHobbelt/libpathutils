@@ -20,6 +20,8 @@ or even directly into the final output std::string without having to use any loc
 #include <string>
 #include <expected>
 #include <memory>
+#include <tuple>
+#include <utility>
 #if 0
 #include <exception>
 #include <stdexcept>
@@ -146,6 +148,27 @@ namespace pathutils {
 	};
 
 	// and all that done merely to keep this bit DRY. Sans virtual functions, my my, oh dear, oh dear.
+	//
+	// NOTE: we don't use std::expected but std::tuple instead here to avoid the whole mess with std::expected and non-copyable error types. (LWG/issue3938)
+	// 
+	// Besides, from my perspective, returned *values* and *errors* are *co-existent*, i.e. you CAN have BOTH a value and an error at the same time.
+	// Of course, the *value* will be a buggered/untrusty one when you have an error, but you MAY have something of a value anyway, that
+	// you can look at in any diagnostic output. std::expected doesn't work that way: it's either/or.
+	//
+	// Because we only have TWO return items (string value + error instance ref) we use the specialized std::pair instead of std::tuple.
+	//
+	// [Edit:] as I find std::pair adds very little to the readability of this thing, we reduce to a basic return struct carrying both value and error.
+
+	struct SaniResult {
+		std::string value;
+		ErrorInfoPtr error;
+
+		[[nodiscard]] bool fail(void) const {
+			return !!error;
+		}
+	};
+
+#if 0
 	template <typename T>
 	std::expected<std::string, ErrorInfoPtr> sanitize(std::string_view input, SanitationProcessorBase<T> &processor, size_t offset = 0) {
 		// process start: initialize output and do any userland preparation your custom SanitationProcessor might need.
@@ -167,6 +190,31 @@ namespace pathutils {
 		}
 		return output;
 	}
+#else
+	template <typename T>
+	SaniResult sanitize(std::string_view input, SanitationProcessorBase<T> &processor, size_t offset = 0) {
+		// process start: initialize output and do any userland preparation your custom SanitationProcessor might need.
+		SaniResult rv{
+			.value = processor.process_start(input, offset)
+		};
+		while (!processor.all_done_or_fail(input, offset)) {
+			// process element: the userland-defined process_element() decides what 'an element' is to be,
+			// so we just keep calling it until all is done or an error occurs.
+			// Meanwhile, process_element() will update the input std::string_view to remove the processed part.
+			rv.value += processor.process_element(input, offset);
+		}
+		// process end: finalize output, report any errors which occurred along the way.
+		rv.error = processor.process_end(rv.value, input, offset);
+		if (rv.fail()) {
+			return rv;
+		}
+		// extra check: make sure the entire input has been processed
+		if (!input.empty()) {
+			rv.error = std::make_unique<ErrorInfo>("Sanitization failed: the input wasn't procesed in its entirety");
+		}
+		return rv;
+	}
+#endif
 
 	// and now for the elemental filter methods (to be used in custom SanitationProcessor implementations):
 
@@ -177,6 +225,7 @@ namespace pathutils {
 	std::string demo_using_sanitize(std::string_view input) {
 		BasicSanitationProcessorDemo processor;
 
+#if 0 // std::expected use:
 #if 0
 		auto [s, ex] = sanitize(input, processor);
 		// -->
@@ -209,6 +258,23 @@ namespace pathutils {
 			// error occurred
 			"ERROR: " + rv.error()->message
 		);
+#endif
+#else
+		// using SaniResult class instead of std::expected: simple, clean, no hassle about non-copyable error types.   >:-(
+		// PLUS we can decompose the bugger directly into value + error parts, which is nice and clean.
+		// Could've done the same with std::pair or std::tuple but I don't see the benefit of those here, unless you like extra
+		// typing and extra clutter, also in your return statements. This comes at the cost of one extra implicit
+		// construction of value and error as default values in the `SaniResult rv;` statement above, but I can live with that!
+		//
+		// [Edit:] so I did the process_start as part of that RAII construction instead: that's one less superfluous default
+		// construction of `value`.
+		auto [s, ex] = sanitize(input, processor);
+
+		if (ex != nullptr) {
+			// error occurred
+			return "ERROR: " + ex->message;
+		}
+		return s;
 #endif
 	}
 
