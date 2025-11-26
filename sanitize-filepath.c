@@ -4356,8 +4356,10 @@ namespace crow
 		};
 		/// @endcond
 
-		inline static std::string base64encode(const unsigned char* data, size_t size, const char* key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
+		inline static std::string base64encode(const unsigned char* data, size_t size, const char* key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
 		{
+			// the 'padding' character in official Base64 RFC4648 is '=', but *we* also do accept the scenario where no padding is needed, i.e. '\0' (EndOfCString) is to be used as the padding char.
+			assert(strlen(key) >= 64);
 			std::string ret;
 			ret.resize((size + 2) / 3 * 4);
 			auto it = ret.begin();
@@ -4377,8 +4379,8 @@ namespace crow
 				*it++ = key[(static_cast<unsigned char>(*data) & 0xFC) >> 2];
 				unsigned char h = (static_cast<unsigned char>(*data++) & 0x03) << 4;
 				*it++ = key[h];
-				*it++ = '=';
-				*it++ = '=';
+				*it++ = key[64];
+				*it++ = key[64];
 			}
 			else if (size == 2)
 			{
@@ -4387,12 +4389,12 @@ namespace crow
 				*it++ = key[h | ((static_cast<unsigned char>(*data) & 0xF0) >> 4)];
 				h = (static_cast<unsigned char>(*data++) & 0x0F) << 2;
 				*it++ = key[h];
-				*it++ = '=';
+				*it++ = key[64];
 			}
 			return ret;
 		}
 
-		inline static std::string base64encode(std::string data, size_t size, const char* key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
+		inline static std::string base64encode(std::string data, size_t size, const char* key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
 		{
 			return base64encode((const unsigned char*)data.c_str(), size, key);
 		}
@@ -4533,7 +4535,7 @@ namespace crow
 					source.erase(ofs + 1, (i - ofs) - 1);
 					source[ofs] = replacement;
 				}
-				};
+			};
 			bool checkForSpecialEntries = true;
 			for (unsigned i = 0; i < data.length(); ++i)
 			{
